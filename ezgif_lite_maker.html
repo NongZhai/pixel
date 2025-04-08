@@ -196,8 +196,8 @@
       <div class="screen" id="screenBox">
         <h1>UPLOAD IMAGE</h1>
         <p id="step1">1. UPLOAD IMAGE</p>
-        <p>2. SPLIT IMAGE</p>
-        <p>3. DOWNLOAD ZIP</p>
+        <p id="step2">2. SPLIT IMAGE</p>
+        <p id="step3">3. DOWNLOAD ZIP</p>
         <p>4. CREATE GIF</p>
         <label for="imageUpload" class="upload-box">CHOOSE FILE</label>
         <input type="file" id="imageUpload" accept="image/png" onchange="document.getElementById('step1').textContent = '✅ IMAGE UPLOADED'">
@@ -216,5 +216,27 @@
       <div class="vent"></div>
     </div>
   </div>
+  <script>
+  const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+  const step3 = document.getElementById('step3');
+
+  document.querySelector('.a-button').onclick = () => {
+    if (step1.textContent.includes('✅')) {
+      step2.textContent = '✅ IMAGE SPLIT';
+    } else {
+      alert('請先上傳圖片！');
+    }
+  };
+
+  document.querySelector('.start-button').onclick = () => {
+    if (step2.textContent.includes('✅')) {
+      step3.textContent = '✅ ZIP READY';
+    } else {
+      alert('請先分割圖片！');
+    }
+  };
+</script>
 </body>
 </html>
+
