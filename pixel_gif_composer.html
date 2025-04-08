@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>九宮格 GIF 合成器</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f2f2f2;
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
+    button {
+      background-color: black;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    h1 {
+      font-size: 1.5rem;
+    }
+    .preview {
+      text-align: center;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🖼️ 九宮格 GIF 合成器</h1>
+
+  <label>上傳一張 768x768 九宮格圖片：</label>
+  <input type="file" id="gridImage" accept="image/*">
+
+  <label>每格延遲（毫秒）：</label>
+  <input type="number" id="delay" value="100">
+
+  <button onclick="processGridImage()">🎞️ 合成動畫 GIF</button>
+
+  <div class="preview">
+    <h3>GIF 預覽：</h3>
+    <div id="gifPreview"></div>
+    <a id="downloadLink" href="#" download="animation.gif">🔽 下載 GIF</a>
+  </div>
+
+  <script>
+    function processGridImage() {
+      const file = document.getElementById('gridImage').files[0];
+      const delay = parseInt(document.getElementById('delay').value);
+      const gifPreview = document.getElementById('gifPreview');
+      const downloadLink = document.getElementById('downloadLink');
+      gifPreview.innerHTML = '';
+
+      if (!file) {
+        alert("請上傳一張九宮格圖片。");
+        return;
+      }
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const gridSize = 256;
+      canvas.width = gridSize;
+      canvas.height = gridSize;
+
+      const gif = new GIF({
+        workers: 2,
+        quality: 10,
+        workerScript: URL.createObjectURL(new Blob([
+          "var window = self; var navigator = {}; " +
+          atob('Ly8gU2ltcGxpZmllZCB2ZXJzaW9uIG9mIGdpZi53b3JrZXIuanMgZGVmbGF0ZWQgdG8gd29yayB3aXRob3V0IGNyb3NzIGRvbWFpbiBsb2FkaW5nLg0KdmFyIEdpZldvcmtlciA9IGZ1bmN0aW9uKCkgeyBjb25zb2xlLmxvZygnKiBXb3JrZXIgaW5qZWN0ZWQqJyk7IHRoaXMucG9zdE1lc3NhZ2UoJ0dJRiB3b3JrZXIgaW5qZWN0ZWQnKTsgfTsgdHJ5IHsgd2luZG93LnNlbGYub25tZXNzYWdlID0gZnVuY3Rpb24oZSl7fTsgfSBjYXRjaChlKSB7IGNvbnNvbGUubG9nKCcqKiBXb3JrZXIgaW5pdCBmYWlsZWQ6JywgZSk7IH0=')
+        ], { type: 'application/javascript' }))
+      });
+
+      const img = new Image();
+      img.onload = function () {
+        let framesAdded = 0;
+        for (let row = 0; row < 3; row++) {
+          for (let col = 0; col < 3; col++) {
+            ctx.clearRect(0, 0, gridSize, gridSize);
+            ctx.drawImage(img, col * gridSize, row * gridSize, gridSize, gridSize, 0, 0, gridSize, gridSize);
+            gif.addFrame(canvas, { copy: true, delay: delay });
+            framesAdded++;
+            if (framesAdded === 9) {
+              gif.on('finished', function (blob) {
+                const url = URL.createObjectURL(blob);
+                gifPreview.innerHTML = `<img src="${url}" style="max-width:100%">`;
+                downloadLink.href = url;
+              });
+              gif.render();
+            }
+          }
+        }
+      };
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
