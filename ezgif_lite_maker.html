@@ -301,6 +301,20 @@ document.querySelector('.start-button').onclick = () => {
     }
   }
 };
+document.querySelector('.select-button').onclick = () => {
+  if (!step3.textContent.includes('✅')) {
+    if (!step1.textContent.includes('✅')) {
+      alert('請先上傳圖片！');
+    } else if (!step2.textContent.includes('✅')) {
+      alert('請先分割圖片！');
+    } else {
+      alert('請先完成打包下載！');
+    }
+    return;
+  }
+  window.open('https://ezgif.com/maker', '_blank');
+};
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </body>
