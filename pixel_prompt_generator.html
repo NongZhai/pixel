@@ -2,8 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>像素動畫工具箱</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+  <title>逐偵提示詞產生器</title>
   <style>
     body {
       font-family: sans-serif;
@@ -35,20 +34,15 @@
       padding: 1rem;
       margin-bottom: 2rem;
     }
-    .preview {
-      text-align: center;
-      margin-top: 1rem;
-    }
   </style>
 </head>
 <body>
-  <h1>🎮 像素動畫工具箱</h1>
+  <h1>📝 逐偵提示詞產生器</h1>
 
   <div class="note">
     ⚠️ <strong>提醒：</strong> 若輸入中包含知名角色（如：皮卡丘、瑪利歐等），可能涉及版權風險。建議改為描述風格相似的原創角色，例如「黃色電氣老鼠造型角色」。
   </div>
 
-  <h2>📝 逐偵提示詞產生器</h2>
   <label>人物特徵：</label>
   <input type="text" id="character" placeholder="如：疲憊的女設計師，黑眼圈明顯">
 
@@ -66,19 +60,6 @@
 
   <textarea id="output" rows="12" readonly></textarea>
   <button onclick="copyPrompt()">📋 複製提示詞</button>
-
-  <h2>🖼️ 九宮格動畫圖分割與合成 GIF</h2>
-  <label>上傳一張 768x768 的九宮格圖：</label>
-  <input type="file" id="gridImage" accept="image/*">
-  <label>每格延遲 (ms)：</label>
-  <input type="number" id="delay" value="100">
-  <button onclick="processGridImage()">🎞️ 分割並合成 GIF</button>
-
-  <div class="preview">
-    <h3>GIF 預覽：</h3>
-    <div id="gifPreview"></div>
-    <a id="downloadLink" href="#" download="animation.gif">🔽 下載 GIF</a>
-  </div>
 
   <script>
     function generatePrompt() {
@@ -118,61 +99,7 @@
       output.select();
       document.execCommand('copy');
     }
-
-    function processGridImage() {
-      const file = document.getElementById('gridImage').files[0];
-      const delay = parseInt(document.getElementById('delay').value);
-      const gifPreview = document.getElementById('gifPreview');
-      const downloadLink = document.getElementById('downloadLink');
-      gifPreview.innerHTML = '';
-
-      if (!file) {
-        alert("請上傳一張九宮格圖片。");
-        return;
-      }
-
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const gridSize = 256;
-      canvas.width = gridSize;
-      canvas.height = gridSize;
-
-      const workerBlob = new Blob([
-        `self.onmessage = function(e) { importScripts('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'); }`
-      ], { type: 'application/javascript' });
-
-      const gif = new GIF({
-        workers: 2,
-        quality: 10,
-        workerScript: URL.createObjectURL(workerBlob)
-      });
-
-      const img = new Image();
-      img.onload = function () {
-        let framesAdded = 0;
-        for (let row = 0; row < 3; row++) {
-          for (let col = 0; col < 3; col++) {
-            ctx.clearRect(0, 0, gridSize, gridSize);
-            ctx.drawImage(img, col * gridSize, row * gridSize, gridSize, gridSize, 0, 0, gridSize, gridSize);
-            gif.addFrame(canvas, { copy: true, delay: delay });
-            framesAdded++;
-            if (framesAdded === 9) {
-              gif.on('finished', function (blob) {
-                const url = URL.createObjectURL(blob);
-                gifPreview.innerHTML = `<img src="${url}" style="max-width:100%">`;
-                downloadLink.href = url;
-              });
-              gif.render();
-            }
-          }
-        }
-      };
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
   </script>
 </body>
 </html>
+
