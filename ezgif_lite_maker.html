@@ -217,22 +217,11 @@
     </div>
   </div>
   <script>
-function checkStep(requiredStep) {
-  if (requiredStep === 1 && !step1.textContent.includes('✅')) {
-    alert('請先上傳圖片！');
-    return false;
-  }
-  if (requiredStep === 2 && !step2.textContent.includes('✅')) {
-    alert('請先分割圖片！');
-    return false;
-  }
-  return true;
-}
-
 const step1 = document.getElementById('step1');
 const step2 = document.getElementById('step2');
 const step3 = document.getElementById('step3');
 let uploadedImage = null;
+let splitImages = [];
 
 const imageInput = document.getElementById('imageUpload');
 imageInput.addEventListener('change', (e) => {
@@ -240,10 +229,23 @@ imageInput.addEventListener('change', (e) => {
   if (file && file.type.startsWith('image/')) {
     step1.textContent = '✅ IMAGE UPLOADED';
     uploadedImage = file;
+    splitImages = [];
   }
 });
 
-function splitImageAndDownload(imgFile) {
+function checkStep(requiredStep) {
+  if (requiredStep === 1 && !step1.textContent.includes('✅')) {
+    alert('請先上傳圖片！');
+    return false;
+  }
+  if (requiredStep === 2 && !step2.textContent.includes('✅')) {
+    alert('請先分割圖片（按 B 鍵）！');
+    return false;
+  }
+  return true;
+}
+
+function splitImageAndDownload(imgFile, previewOnly = false) {
   const img = new Image();
   const reader = new FileReader();
   reader.onload = function () {
@@ -253,29 +255,50 @@ function splitImageAndDownload(imgFile) {
       const pieceWidth = img.width / cols;
       const pieceHeight = img.height / rows;
       const zip = new JSZip();
-
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       canvas.width = pieceWidth;
       canvas.height = pieceHeight;
 
       let completed = 0;
+      splitImages = [];
 
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, x * pieceWidth, y * pieceHeight, pieceWidth, pieceHeight, 0, 0, pieceWidth, pieceHeight);
+          ctx.drawImage(
+            img,
+            x * pieceWidth,
+            y * pieceHeight,
+            pieceWidth,
+            pieceHeight,
+            0,
+            0,
+            pieceWidth,
+            pieceHeight
+          );
+
           canvas.toBlob((blob) => {
-            zip.file(`frame_${y * cols + x + 1}.png`, blob);
+            if (!previewOnly) {
+              zip.file(`frame_${y * cols + x + 1}.png`, blob);
+            }
+
+            const previewURL = URL.createObjectURL(blob);
+            splitImages.push(previewURL);
+
             completed++;
             if (completed === cols * rows) {
-              zip.generateAsync({ type: 'blob' }).then((content) => {
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(content);
-                a.download = 'frames.zip';
-                a.click();
-                step3.textContent = '✅ ZIP READY';
-              });
+              if (previewOnly) {
+                showPreviewModal();
+              } else {
+                zip.generateAsync({ type: 'blob' }).then((content) => {
+                  const a = document.createElement('a');
+                  a.href = URL.createObjectURL(content);
+                  a.download = 'frames.zip';
+                  a.click();
+                  step3.textContent = '✅ ZIP READY';
+                });
+              }
             }
           }, 'image/png');
         }
@@ -286,22 +309,67 @@ function splitImageAndDownload(imgFile) {
   reader.readAsDataURL(imgFile);
 }
 
+function showPreviewModal() {
+  const modal = document.createElement('div');
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.width = '100vw';
+  modal.style.height = '100vh';
+  modal.style.background = 'rgba(0,0,0,0.85)';
+  modal.style.display = 'flex';
+  modal.style.flexWrap = 'wrap';
+  modal.style.overflow = 'auto';
+  modal.style.justifyContent = 'center';
+  modal.style.alignItems = 'center';
+  modal.style.zIndex = '9999';
+
+  splitImages.forEach((src) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.width = '100px';
+    img.style.margin = '10px';
+    modal.appendChild(img);
+  });
+
+  modal.onclick = () => document.body.removeChild(modal);
+  document.body.appendChild(modal);
+}
+
+// 按鍵事件處理
 document.querySelector('.a-button').onclick = () => {
-  if (checkStep(1)) {
-    step2.textContent = '✅ IMAGE SPLIT';
-  }
+  if (!checkStep(1)) return;
+  if (!checkStep(2)) return;
+  alert('A 鍵目前沒有功能 🎮');
+};
+
+document.querySelector('.b-button').onclick = () => {
+  if (!checkStep(1)) return;
+  step2.textContent = '✅ IMAGE SPLIT';
+  splitImageAndDownload(uploadedImage, true); // 分割但不下載
 };
 
 document.querySelector('.start-button').onclick = () => {
-  if (checkStep(2)) {
-    if (!uploadedImage) {
-      alert('找不到上傳圖片');
-    } else {
-      splitImageAndDownload(uploadedImage);
-    }
+  if (!checkStep(1)) return;
+  if (!checkStep(2)) return;
+  if (!uploadedImage) {
+    alert('找不到上傳圖片');
+  } else {
+    splitImageAndDownload(uploadedImage); // 下載
   }
 };
+
 document.querySelector('.select-button').onclick = () => {
+  if (!checkStep(1)) return;
+  if (!checkStep(2)) return;
+  if (splitImages.length > 0) {
+    showPreviewModal();
+  } else {
+    alert('請先按 B 鍵進行分割！');
+  }
+};
+
+document.querySelector('.select-button').ondblclick = () => {
   if (!step3.textContent.includes('✅')) {
     if (!step1.textContent.includes('✅')) {
       alert('請先上傳圖片！');
@@ -315,7 +383,15 @@ document.querySelector('.select-button').onclick = () => {
   window.open('https://ezgif.com/maker', '_blank');
 };
 
+document.querySelectorAll('.dpad div').forEach((btn) => {
+  btn.onclick = () => {
+    if (!checkStep(1)) return;
+    if (!checkStep(2)) return;
+    alert('方向鍵目前沒有功能');
+  };
+};
 </script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </body>
 </html>
