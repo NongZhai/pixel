@@ -30,7 +30,7 @@
   <h2>🎞️ 步驟 2：合成動畫 GIF</h2>
   <label>每格延遲（毫秒）：</label>
   <input type="number" id="delayInput" value="100">
-  <button onclick="generateGIF()">▶️ 合成 GIF</button>
+  <button onclick="redirectToEzgif()">➡️ 使用 Ezgif 合成</button>
 
   <div class="preview">
     <h3>GIF 預覽：</h3>
@@ -122,36 +122,14 @@
       });
     }
 
-    function generateGIF() {
-      if (imageList.length !== 16) {
-        alert("請先完成圖片分割！");
+    function redirectToEzgif() {
+      if (zipFrames.length !== 16) {
+        alert("請先完成圖片分割並下載 ZIP！");
         return;
       }
-
-      const delay = parseInt(document.getElementById('delayInput').value);
-      const gif = new GIF({
-        workers: 2,
-        quality: 10,
-        workerScript: URL.createObjectURL(new Blob([
-          "var window = self; var navigator = {}; " +
-          atob('Ly8gU2ltcGxpZmllZCB2ZXJzaW9uIG9mIGdpZi53b3JrZXIuanMgZGVmbGF0ZWQgdG8gd29yayB3aXRob3V0IGNyb3NzIGRvbWFpbiBsb2FkaW5nLg0KdmFyIEdpZldvcmtlciA9IGZ1bmN0aW9uKCkgeyBjb25zb2xlLmxvZygnKiBXb3JrZXIgaW5qZWN0ZWQqJyk7IHRoaXMucG9zdE1lc3NhZ2UoJ0dJRiB3b3JrZXIgaW5qZWN0ZWQnKTsgfTsgdHJ5IHsgd2luZG93LnNlbGYub25tZXNzYWdlID0gZnVuY3Rpb24oZSl7fTsgfSBjYXRjaChlKSB7IGNvbnNvbGUubG9nKCcqKiBXb3JrZXIgaW5pdCBmYWlsZWQ6JywgZSk7IH0=')
-        ], { type: 'application/javascript' }))
-      });
-
-      imageList.forEach(canvas => {
-        gif.addFrame(canvas, { delay: delay });
-      });
-
-      gif.on('finished', function (blob) {
-        const url = URL.createObjectURL(blob);
-        document.getElementById('previewContainer').innerHTML = `<img src="${url}" style="max-width:100%">`;
-        document.getElementById('downloadLink').href = url;
-      });
-
-      gif.render();
+      window.open("https://ezgif.com/maker", "_blank");
     }
   </script>
 </body>
 </html>
-
 
