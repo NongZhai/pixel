@@ -2,50 +2,59 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>Ezgif Lite - Web GIF 合成器</title>
+  <title>GIF 分割 + 合成一體化工具</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
   <style>
     body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; max-width: 900px; margin: auto; }
-    h1 { text-align: center; }
+    h1, h2 { text-align: center; }
     input, button { width: 100%; padding: 1rem; margin-bottom: 1rem; font-size: 1rem; }
-    .preview, canvas { text-align: center; margin-top: 1rem; }
-    #frames { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
-    .frame-img { width: 64px; height: 64px; object-fit: cover; border: 1px solid #ccc; }
+    #frames { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .frame-img { width: 128px; height: 128px; object-fit: cover; border: 1px solid #ccc; }
+    #statusMessage { text-align: center; color: green; margin-bottom: 1rem; font-weight: bold; }
+    #fileNameDisplay { text-align: center; font-size: 14px; color: #333; margin-bottom: 0.5rem; }
+    .preview { text-align: center; margin-top: 2rem; }
   </style>
 </head>
 <body>
-  <h1>🖼️ Ezgif Lite - 本地 GIF 合成器（支援單一 1024x1024 PNG 分割）</h1>
+  <h1>🧩 GIF 分割 + 合成工具</h1>
 
-  <label>上傳 1024x1024 的 4x4 九宮格 PNG：</label>
+  <h2>📂 步驟 1：上傳 1024x1024 的 4x4 九宮格 PNG</h2>
   <input type="file" id="imageUpload" accept="image/png">
-
-  <label>每格延遲（毫秒）：</label>
-  <input type="number" id="delay" value="100">
-
-  <button onclick="splitAndMakeGIF()">🎞️ 分割並合成 GIF</button>
-
+  <button onclick="splitFrames()">✂️ 分割圖片</button>
+  <div id="fileNameDisplay"></div>
+  <div id="statusMessage"></div>
   <div id="frames"></div>
+
+  <h2>🎞️ 步驟 2：合成動畫 GIF</h2>
+  <label>每格延遲（毫秒）：</label>
+  <input type="number" id="delayInput" value="100">
+  <button onclick="generateGIF()">▶️ 合成 GIF</button>
+
   <div class="preview">
     <h3>GIF 預覽：</h3>
-    <div id="gifPreview"></div>
+    <div id="previewContainer"></div>
     <a id="downloadLink" href="#" download="output.gif">🔽 下載 GIF</a>
   </div>
 
   <script>
-    function splitAndMakeGIF() {
-      const file = document.getElementById('imageUpload').files[0];
-      const delay = parseInt(document.getElementById('delay').value);
-      const gifPreview = document.getElementById('gifPreview');
-      const downloadLink = document.getElementById('downloadLink');
-      const frameContainer = document.getElementById('frames');
+    let imageList = [];
 
-      gifPreview.innerHTML = '';
+    function splitFrames() {
+      const file = document.getElementById('imageUpload').files[0];
+      const frameContainer = document.getElementById('frames');
+      const statusMessage = document.getElementById('statusMessage');
+      const fileNameDisplay = document.getElementById('fileNameDisplay');
       frameContainer.innerHTML = '';
+      statusMessage.textContent = '';
+      fileNameDisplay.textContent = '';
+      imageList = [];
 
       if (!file) {
         alert("請上傳一張 1024x1024 的圖片。");
         return;
       }
+
+      fileNameDisplay.textContent = `📂 當前上傳檔案：${file.name}`;
 
       const img = new Image();
       const reader = new FileReader();
@@ -57,53 +66,60 @@
             return;
           }
 
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = 256;
-          canvas.height = 256;
+          for (let i = 0; i < 16; i++) {
+            const row = Math.floor(i / 4);
+            const col = i % 4;
 
-          const gif = new GIF({
-            workers: 2,
-            quality: 10,
-            transparent: 0x000000,
-            workerScript: URL.createObjectURL(new Blob([
-              `self.onmessage=function(e){importScripts('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');}`
-            ], { type: 'application/javascript' }))
-          });
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 256;
 
-          let count = 0;
-          const addFrameAndMaybeRender = () => {
-            const row = Math.floor(count / 4);
-            const col = count % 4;
-
-            ctx.clearRect(0, 0, 256, 256);
             ctx.drawImage(img, col * 256, row * 256, 256, 256, 0, 0, 256, 256);
-            gif.addFrame(canvas, { copy: true, delay: delay });
 
-            const preview = new Image();
-            preview.src = canvas.toDataURL();
-            preview.className = 'frame-img';
-            frameContainer.appendChild(preview);
+            const frameDataURL = canvas.toDataURL();
+            const frameImg = new Image();
+            frameImg.src = frameDataURL;
+            frameImg.className = 'frame-img';
+            frameContainer.appendChild(frameImg);
+            imageList.push(canvas);
+          }
 
-            count++;
-            if (count < 16) {
-              setTimeout(addFrameAndMaybeRender, 0);
-            } else {
-              gif.on('finished', function (blob) {
-                const url = URL.createObjectURL(blob);
-                gifPreview.innerHTML = `<img src="${url}" style="max-width:100%">`;
-                downloadLink.href = url;
-              });
-              gif.render();
-            }
-          };
-
-          addFrameAndMaybeRender();
+          statusMessage.textContent = '✅ 上傳成功並完成分割！';
         };
         img.src = e.target.result;
       };
 
       reader.readAsDataURL(file);
+    }
+
+    function generateGIF() {
+      if (imageList.length !== 16) {
+        alert("請先完成圖片分割！");
+        return;
+      }
+
+      const delay = parseInt(document.getElementById('delayInput').value);
+      const gif = new GIF({
+        workers: 2,
+        quality: 10,
+        workerScript: URL.createObjectURL(new Blob([
+          "var window = self; var navigator = {}; " +
+          atob('Ly8gU2ltcGxpZmllZCB2ZXJzaW9uIG9mIGdpZi53b3JrZXIuanMgZGVmbGF0ZWQgdG8gd29yayB3aXRob3V0IGNyb3NzIGRvbWFpbiBsb2FkaW5nLg0KdmFyIEdpZldvcmtlciA9IGZ1bmN0aW9uKCkgeyBjb25zb2xlLmxvZygnKiBXb3JrZXIgaW5qZWN0ZWQqJyk7IHRoaXMucG9zdE1lc3NhZ2UoJ0dJRiB3b3JrZXIgaW5qZWN0ZWQnKTsgfTsgdHJ5IHsgd2luZG93LnNlbGYub25tZXNzYWdlID0gZnVuY3Rpb24oZSl7fTsgfSBjYXRjaChlKSB7IGNvbnNvbGUubG9nKCcqKiBXb3JrZXIgaW5pdCBmYWlsZWQ6JywgZSk7IH0=')
+        ], { type: 'application/javascript' }))
+      });
+
+      imageList.forEach(canvas => {
+        gif.addFrame(canvas, { delay: delay });
+      });
+
+      gif.on('finished', function (blob) {
+        const url = URL.createObjectURL(blob);
+        document.getElementById('previewContainer').innerHTML = `<img src="${url}" style="max-width:100%">`;
+        document.getElementById('downloadLink').href = url;
+      });
+
+      gif.render();
     }
   </script>
 </body>
