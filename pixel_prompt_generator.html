@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>逐偵提示詞產生器</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f2f2f2;
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
+    button {
+      background-color: black;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    h1 {
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 像素逐偵提示詞產生器</h1>
+  <label>人物特徵：</label>
+  <input type="text" id="character" placeholder="如：疲憊的女設計師，黑眼圈明顯">
+
+  <label>服裝設定：</label>
+  <input type="text" id="outfit" placeholder="如：深綠帽T、牛仔褲、球鞋">
+
+  <label>動作提示（會自動轉為逐格動作）：</label>
+  <input type="text" id="actionHint" placeholder="如：疲憊地走進房間後坐下並趴在桌上">
+
+  <label>場景與背景：</label>
+  <input type="text" id="scene" placeholder="如：深夜工作室，桌燈打開，牆上貼滿設計圖">
+
+  <label>動畫格數：</label>
+  <select id="frameCount">
+    <option value="4">4 格</option>
+    <option value="6" selected>6 格</option>
+    <option value="8">8 格</option>
+  </select>
+
+  <button onclick="generatePrompt()">✨ 產生提示詞</button>
+
+  <h2>🔖 提示詞（可複製使用）：</h2>
+  <textarea id="output" rows="12" readonly></textarea>
+  <button onclick="copyPrompt()">📋 複製提示詞</button>
+
+  <script>
+    function generatePrompt() {
+      const character = document.getElementById('character').value;
+      const outfit = document.getElementById('outfit').value;
+      const actionHint = document.getElementById('actionHint').value;
+      const scene = document.getElementById('scene').value;
+      const frameCount = document.getElementById('frameCount').value;
+
+      let prompt = `Generate a pixel art animation (768x768, square) of ${character} in ${outfit}, placed in ${scene}.
+`;
+      prompt += `Create a ${frameCount}-frame looped animation that expresses the following behavior:
+`;
+      prompt += `“${actionHint}”
+`;
+      prompt += `
+Break it down into natural movements between frames. Keep pixel-art lighting, consistent proportions, and cozy indie game style.`;
+
+      document.getElementById('output').value = prompt;
+    }
+
+    function copyPrompt() {
+      const output = document.getElementById('output');
+      output.select();
+      document.execCommand('copy');
+    }
+  </script>
+</body>
+</html>
