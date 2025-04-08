@@ -12,7 +12,7 @@
       max-width: 800px;
       margin: auto;
     }
-    input, textarea, select, button {
+    input, textarea, button {
       width: 100%;
       padding: 0.75rem;
       margin-top: 0.5rem;
@@ -61,25 +61,18 @@
   <label>場景與背景：</label>
   <input type="text" id="scene" placeholder="如：深夜工作室，桌燈打開，牆上貼滿設計圖">
 
-  <label>動畫格數：</label>
-  <select id="frameCount">
-    <option value="4">4 格</option>
-    <option value="6" selected>6 格</option>
-    <option value="8">8 格</option>
-  </select>
-
   <button onclick="generatePrompt()">✨ 產生提示詞</button>
   <button onclick="generateSafePrompt()">🛡️ 安全英文提示詞</button>
 
   <textarea id="output" rows="12" readonly></textarea>
   <button onclick="copyPrompt()">📋 複製提示詞</button>
 
-  <h2>🖼️ 圖片合成動畫（GIF）</h2>
-  <label>上傳逐格圖片：</label>
-  <input type="file" id="imageInput" multiple accept="image/*">
+  <h2>🖼️ 九宮格動畫圖分割與合成 GIF</h2>
+  <label>上傳一張 768x768 的九宮格圖：</label>
+  <input type="file" id="gridImage" accept="image/*">
   <label>每格延遲 (ms)：</label>
   <input type="number" id="delay" value="100">
-  <button onclick="generateGIF()">🎞️ 合成動畫 GIF</button>
+  <button onclick="processGridImage()">🎞️ 分割並合成 GIF</button>
 
   <div class="preview">
     <h3>GIF 預覽：</h3>
@@ -93,10 +86,9 @@
       const outfit = document.getElementById('outfit').value;
       const actionHint = document.getElementById('actionHint').value;
       const scene = document.getElementById('scene').value;
-      const frameCount = document.getElementById('frameCount').value;
 
       let prompt = `Generate a pixel art animation (768x768, square) of ${character} in ${outfit}, placed in ${scene}.\n`;
-      prompt += `Create a ${frameCount}-frame looped animation that expresses the following behavior:\n`;
+      prompt += `Create a 9-frame looped animation that expresses the following behavior:\n`;
       prompt += `“${actionHint}”\n`;
       prompt += `\nBreak it down into natural movements between frames. Keep pixel-art lighting, consistent proportions, and cozy indie game style.`;
 
@@ -108,14 +100,13 @@
       const outfit = document.getElementById('outfit').value;
       const actionHint = document.getElementById('actionHint').value;
       const scene = document.getElementById('scene').value;
-      const frameCount = document.getElementById('frameCount').value;
 
       const safeCharacter = character.replace(/女設計師/g, "a female character");
       const safeOutfit = outfit.replace(/帽T|帽t/g, "a hoodie").replace(/泳裝/g, "beachwear");
       const safeScene = scene.replace(/沙灘/g, "a sunny beach").replace(/工作室/g, "a cozy studio");
 
       let prompt = `Generate a pixel art animation (768x768, square) of ${safeCharacter} wearing ${safeOutfit}, placed in ${safeScene}.\n`;
-      prompt += `Create an ${frameCount}-frame looped animation of her performing the following action:\n`;
+      prompt += `Create a 9-frame looped animation of her performing the following action:\n`;
       prompt += `${actionHint}.\n`;
       prompt += `\nBreak the action into natural frame-by-frame motion. Use pixel-art style, soft lighting, and a cozy indie game aesthetic.`;
 
@@ -128,19 +119,23 @@
       document.execCommand('copy');
     }
 
-    function generateGIF() {
-      const files = Array.from(document.getElementById('imageInput').files);
+    function processGridImage() {
+      const file = document.getElementById('gridImage').files[0];
       const delay = parseInt(document.getElementById('delay').value);
       const gifPreview = document.getElementById('gifPreview');
       const downloadLink = document.getElementById('downloadLink');
       gifPreview.innerHTML = '';
 
-      if (files.length === 0) {
-        alert("請上傳至少一張圖片。");
+      if (!file) {
+        alert("請上傳一張九宮格圖片。");
         return;
       }
 
-      files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const gridSize = 256;
+      canvas.width = gridSize;
+      canvas.height = gridSize;
 
       const gif = new GIF({
         workers: 2,
@@ -148,29 +143,34 @@
         workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
       });
 
-      let loaded = 0;
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = new Image();
-          img.onload = function() {
-            gif.addFrame(img, { delay: delay });
-            loaded++;
-            if (loaded === files.length) {
-              gif.on('finished', function(blob) {
+      const img = new Image();
+      img.onload = function () {
+        let framesAdded = 0;
+        for (let row = 0; row < 3; row++) {
+          for (let col = 0; col < 3; col++) {
+            ctx.clearRect(0, 0, gridSize, gridSize);
+            ctx.drawImage(img, col * gridSize, row * gridSize, gridSize, gridSize, 0, 0, gridSize, gridSize);
+            gif.addFrame(ctx, { copy: true, delay: delay });
+            framesAdded++;
+            if (framesAdded === 9) {
+              gif.on('finished', function (blob) {
                 const url = URL.createObjectURL(blob);
                 gifPreview.innerHTML = `<img src="${url}" style="max-width:100%">`;
                 downloadLink.href = url;
               });
               gif.render();
             }
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
+          }
+        }
+      };
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
   </script>
 </body>
 </html>
+
 
