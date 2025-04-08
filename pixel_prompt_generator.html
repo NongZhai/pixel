@@ -69,6 +69,7 @@
   </select>
 
   <button onclick="generatePrompt()">✨ 產生提示詞</button>
+  <button onclick="generateSafePrompt()">🛡️ 安全英文提示詞</button>
 
   <textarea id="output" rows="12" readonly></textarea>
   <button onclick="copyPrompt()">📋 複製提示詞</button>
@@ -98,6 +99,25 @@
       prompt += `Create a ${frameCount}-frame looped animation that expresses the following behavior:\n`;
       prompt += `“${actionHint}”\n`;
       prompt += `\nBreak it down into natural movements between frames. Keep pixel-art lighting, consistent proportions, and cozy indie game style.`;
+
+      document.getElementById('output').value = prompt;
+    }
+
+    function generateSafePrompt() {
+      const character = document.getElementById('character').value;
+      const outfit = document.getElementById('outfit').value;
+      const actionHint = document.getElementById('actionHint').value;
+      const scene = document.getElementById('scene').value;
+      const frameCount = document.getElementById('frameCount').value;
+
+      const safeCharacter = character.replace(/女設計師/g, "a female character");
+      const safeOutfit = outfit.replace(/帽T|帽t/g, "a hoodie").replace(/泳裝/g, "beachwear");
+      const safeScene = scene.replace(/沙灘/g, "a sunny beach").replace(/工作室/g, "a cozy studio");
+
+      let prompt = `Generate a pixel art animation (768x768, square) of ${safeCharacter} wearing ${safeOutfit}, placed in ${safeScene}.\n`;
+      prompt += `Create an ${frameCount}-frame looped animation of her performing the following action:\n`;
+      prompt += `${actionHint}.\n`;
+      prompt += `\nBreak the action into natural frame-by-frame motion. Use pixel-art style, soft lighting, and a cozy indie game aesthetic.`;
 
       document.getElementById('output').value = prompt;
     }
