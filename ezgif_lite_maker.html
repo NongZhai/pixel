@@ -82,7 +82,12 @@
             frameImg.src = frameDataURL;
             frameImg.className = 'frame-img';
             frameContainer.appendChild(frameImg);
-            imageList.push(canvas);
+
+            const copy = document.createElement('canvas');
+            copy.width = 256;
+            copy.height = 256;
+            copy.getContext('2d').drawImage(canvas, 0, 0);
+            imageList.push(copy);
           }
 
           statusMessage.textContent = '✅ 上傳成功並完成分割！';
