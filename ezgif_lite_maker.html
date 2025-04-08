@@ -217,26 +217,93 @@
     </div>
   </div>
   <script>
-  const step1 = document.getElementById('step1');
-  const step2 = document.getElementById('step2');
-  const step3 = document.getElementById('step3');
+function checkStep(requiredStep) {
+  if (requiredStep === 1 && !step1.textContent.includes('✅')) {
+    alert('請先上傳圖片！');
+    return false;
+  }
+  if (requiredStep === 2 && !step2.textContent.includes('✅')) {
+    alert('請先分割圖片！');
+    return false;
+  }
+  return true;
+}
 
-  document.querySelector('.a-button').onclick = () => {
-    if (step1.textContent.includes('✅')) {
-      step2.textContent = '✅ IMAGE SPLIT';
-    } else {
-      alert('請先上傳圖片！');
-    }
-  };
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const step3 = document.getElementById('step3');
+let uploadedImage = null;
 
-  document.querySelector('.start-button').onclick = () => {
-    if (step2.textContent.includes('✅')) {
-      step3.textContent = '✅ ZIP READY';
-    } else {
-      alert('請先分割圖片！');
-    }
+const imageInput = document.getElementById('imageUpload');
+imageInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file && file.type.startsWith('image/')) {
+    step1.textContent = '✅ IMAGE UPLOADED';
+    uploadedImage = file;
+  }
+});
+
+function splitImageAndDownload(imgFile) {
+  const img = new Image();
+  const reader = new FileReader();
+  reader.onload = function () {
+    img.onload = function () {
+      const cols = 4;
+      const rows = 4;
+      const pieceWidth = img.width / cols;
+      const pieceHeight = img.height / rows;
+      const zip = new JSZip();
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = pieceWidth;
+      canvas.height = pieceHeight;
+
+      let completed = 0;
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, x * pieceWidth, y * pieceHeight, pieceWidth, pieceHeight, 0, 0, pieceWidth, pieceHeight);
+          canvas.toBlob((blob) => {
+            zip.file(`frame_${y * cols + x + 1}.png`, blob);
+            completed++;
+            if (completed === cols * rows) {
+              zip.generateAsync({ type: 'blob' }).then((content) => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = 'frames.zip';
+                a.click();
+                step3.textContent = '✅ ZIP READY';
+              });
+            }
+          }, 'image/png');
+        }
+      }
+    };
+    img.src = reader.result;
   };
+  reader.readAsDataURL(imgFile);
+}
+
+document.querySelector('.a-button').onclick = () => {
+  if (checkStep(1)) {
+    step2.textContent = '✅ IMAGE SPLIT';
+  }
+};
+
+document.querySelector('.start-button').onclick = () => {
+  if (checkStep(2)) {
+    if (!uploadedImage) {
+      alert('找不到上傳圖片');
+    } else {
+      splitImageAndDownload(uploadedImage);
+    }
+  }
+};
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </body>
 </html>
+
 
