@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -28,10 +27,21 @@
     h1 {
       font-size: 1.5rem;
     }
+    .note {
+      background: #fff8dc;
+      border-left: 4px solid orange;
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
   </style>
 </head>
 <body>
   <h1>🎮 像素逐偵提示詞產生器</h1>
+
+  <div class="note">
+    ⚠️ <strong>提醒：</strong> 若輸入中包含知名角色（如：皮卡丘、瑪利歐等），可能涉及版權風險。建議改為描述風格相似的原創角色，例如「黃色電氣老鼠造型角色」。
+  </div>
+
   <label>人物特徵：</label>
   <input type="text" id="character" placeholder="如：疲憊的女設計師，黑眼圈明顯">
 
@@ -82,6 +92,10 @@ Break it down into natural movements between frames. Keep pixel-art lighting, co
       output.select();
       document.execCommand('copy');
     }
+  </script>
+</body>
+</html>
+
   </script>
 </body>
 </html>
