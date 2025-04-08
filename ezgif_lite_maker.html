@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Ezgif Lite - Web GIF 合成器</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; max-width: 900px; margin: auto; }
+    h1 { text-align: center; }
+    input, button { width: 100%; padding: 1rem; margin-bottom: 1rem; font-size: 1rem; }
+    .preview, canvas { text-align: center; margin-top: 1rem; }
+    #frames { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+    .frame-img { width: 64px; height: 64px; object-fit: cover; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>🖼️ Ezgif Lite - 本地 GIF 合成器（支援單一 1024x1024 PNG 分割）</h1>
+
+  <label>上傳 1024x1024 的 4x4 九宮格 PNG：</label>
+  <input type="file" id="imageUpload" accept="image/png">
+
+  <label>每格延遲（毫秒）：</label>
+  <input type="number" id="delay" value="100">
+
+  <button onclick="splitAndMakeGIF()">🎞️ 分割並合成 GIF</button>
+
+  <div id="frames"></div>
+  <div class="preview">
+    <h3>GIF 預覽：</h3>
+    <div id="gifPreview"></div>
+    <a id="downloadLink" href="#" download="output.gif">🔽 下載 GIF</a>
+  </div>
+
+  <script>
+    function splitAndMakeGIF() {
+      const file = document.getElementById('imageUpload').files[0];
+      const delay = parseInt(document.getElementById('delay').value);
+      const gifPreview = document.getElementById('gifPreview');
+      const downloadLink = document.getElementById('downloadLink');
+      const frameContainer = document.getElementById('frames');
+
+      gifPreview.innerHTML = '';
+      frameContainer.innerHTML = '';
+
+      if (!file) {
+        alert("請上傳一張 1024x1024 的圖片。");
+        return;
+      }
+
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        img.onload = function () {
+          if (img.width !== 1024 || img.height !== 1024) {
+            alert("圖片尺寸錯誤，請上傳 1024x1024 像素的圖片。");
+            return;
+          }
+
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = 256;
+          canvas.height = 256;
+
+          const gif = new GIF({
+            workers: 2,
+            quality: 10,
+            transparent: 0x000000,
+            workerScript: URL.createObjectURL(new Blob([
+              "var window = self; var navigator = {}; " +
+              atob('Ly8gU2ltcGxpZmllZCB2ZXJzaW9uIG9mIGdpZi53b3JrZXIuanMgZGVmbGF0ZWQgdG8gd29yayB3aXRob3V0IGNyb3NzIGRvbWFpbiBsb2FkaW5nLg0KdmFyIEdpZldvcmtlciA9IGZ1bmN0aW9uKCkgeyBjb25zb2xlLmxvZygnKiBXb3JrZXIgaW5qZWN0ZWQqJyk7IHRoaXMucG9zdE1lc3NhZ2UoJ0dJRiB3b3JrZXIgaW5qZWN0ZWQnKTsgfTsgdHJ5IHsgd2luZG93LnNlbGYub25tZXNzYWdlID0gZnVuY3Rpb24oZSl7fTsgfSBjYXRjaChlKSB7IGNvbnNvbGUubG9nKCcqKiBXb3JrZXIgaW5pdCBmYWlsZWQ6JywgZSk7IH0=')
+            ], { type: 'application/javascript' }))
+          });
+
+          let count = 0;
+          for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 4; col++) {
+              ctx.clearRect(0, 0, 256, 256);
+              ctx.drawImage(img, col * 256, row * 256, 256, 256, 0, 0, 256, 256);
+              gif.addFrame(canvas, { copy: true, delay: delay });
+
+              const preview = new Image();
+              preview.src = canvas.toDataURL();
+              preview.className = 'frame-img';
+              frameContainer.appendChild(preview);
+
+              count++;
+              if (count === 16) {
+                gif.on('finished', function (blob) {
+                  const url = URL.createObjectURL(blob);
+                  gifPreview.innerHTML = `<img src="${url}" style="max-width:100%">`;
+                  downloadLink.href = url;
+                });
+                gif.render();
+              }
+            }
+          }
+        };
+        img.src = e.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
