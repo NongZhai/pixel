@@ -63,15 +63,20 @@
       background-color: #cde675;
       transition: all 0.2s ease-in-out;
     }
-    .upload-box:hover,
-    .upload-box:focus,
-    .upload-box:active {
-      border: 2px solid #000;
-      background-color: #fff;
-      color: #000;
-      box-shadow: 0 0 6px #000 inset;
-      animation: button-press 0.15s ease-in-out;
-    }
+
+.upload-box {
+  font-size: 1rem;
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  border: 2px dashed #1a1a1a;
+  box-shadow: inset -2px -2px 0 #888, inset 2px 2px 0 #fff;
+  background-color: #cde675;
+  transition: all 0.2s ease-in-out;
+}
     .a-button, .b-button, .start-button, .select-button {
       position: absolute;
       width: 50px;
