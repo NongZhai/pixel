@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>GIF 分割 + 合成一體化工具</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; max-width: 900px; margin: auto; }
     h1, h2 { text-align: center; }
@@ -21,6 +22,7 @@
   <h2>📂 步驟 1：上傳 1024x1024 的 4x4 九宮格 PNG</h2>
   <input type="file" id="imageUpload" accept="image/png">
   <button onclick="splitFrames()">✂️ 分割圖片</button>
+  <button onclick="downloadZip()">📦 下載所有分割圖（ZIP）</button>
   <div id="fileNameDisplay"></div>
   <div id="statusMessage"></div>
   <div id="frames"></div>
@@ -38,6 +40,7 @@
 
   <script>
     let imageList = [];
+    let zipFrames = [];
 
     function splitFrames() {
       const file = document.getElementById('imageUpload').files[0];
@@ -48,6 +51,7 @@
       statusMessage.textContent = '';
       fileNameDisplay.textContent = '';
       imageList = [];
+      zipFrames = [];
 
       if (!file) {
         alert("請上傳一張 1024x1024 的圖片。");
@@ -77,7 +81,7 @@
 
             ctx.drawImage(img, col * 256, row * 256, 256, 256, 0, 0, 256, 256);
 
-            const frameDataURL = canvas.toDataURL();
+            const frameDataURL = canvas.toDataURL('image/png');
             const frameImg = new Image();
             frameImg.src = frameDataURL;
             frameImg.className = 'frame-img';
@@ -88,6 +92,7 @@
             copy.height = 256;
             copy.getContext('2d').drawImage(canvas, 0, 0);
             imageList.push(copy);
+            zipFrames.push(frameDataURL);
           }
 
           statusMessage.textContent = '✅ 上傳成功並完成分割！';
@@ -96,6 +101,25 @@
       };
 
       reader.readAsDataURL(file);
+    }
+
+    function downloadZip() {
+      if (zipFrames.length !== 16) {
+        alert("請先完成圖片分割！");
+        return;
+      }
+
+      const zip = new JSZip();
+      zipFrames.forEach((dataURL, index) => {
+        const base64Data = dataURL.replace(/^data:image\/png;base64,/, "");
+        zip.file(`${index + 1}.png`, base64Data, { base64: true });
+      });
+      zip.generateAsync({ type: "blob" }).then(function (content) {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(content);
+        link.download = "frames.zip";
+        link.click();
+      });
     }
 
     function generateGIF() {
@@ -129,4 +153,5 @@
   </script>
 </body>
 </html>
+
 
