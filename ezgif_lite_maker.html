@@ -2,134 +2,184 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>GIF 分割 + 合成一體化工具</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <title>GameBoy Uploader</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; max-width: 900px; margin: auto; }
-    h1, h2 { text-align: center; }
-    input, button { width: 100%; padding: 1rem; margin-bottom: 1rem; font-size: 1rem; }
-    #frames { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-    .frame-img { width: 128px; height: 128px; object-fit: cover; border: 1px solid #ccc; }
-    #statusMessage { text-align: center; color: green; margin-bottom: 1rem; font-weight: bold; }
-    #fileNameDisplay { text-align: center; font-size: 14px; color: #333; margin-bottom: 0.5rem; }
-    .preview { text-align: center; margin-top: 2rem; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Press Start 2P', monospace;
+      background-color: #f1f2dd;
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/6/6e/Gameboy_illustration_upload_flow.png');
+      background-repeat: no-repeat;
+      background-position: center top;
+      background-size: contain;
+      height: 100vh;
+    }
+    .screen {
+      position: absolute;
+      top: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 200px;
+      background-color: #bada55;
+      color: #1a1a1a;
+      padding: 1rem;
+      text-align: center;
+      box-sizing: border-box;
+      border: 4px double #1a1a1a;
+      box-shadow: inset -2px -2px 0 #eaf2c5, inset 2px 2px 0 #6b8e23;
+    }
+    .screen h1 {
+      font-size: 0.85rem;
+      margin-bottom: 0.8rem;
+    }
+    .screen p {
+      margin: 0.4rem 0;
+      font-size: 0.65rem;
+    }
+    .upload-box {
+      margin-top: 0.8rem;
+      padding: 0.4rem;
+      border: 2px dashed #1a1a1a;
+      display: inline-block;
+      cursor: pointer;
+      font-size: 0.65rem;
+      background-color: #cde675;
+      transition: all 0.2s ease-in-out;
+    }
+    .upload-box:hover,
+    .upload-box:focus,
+    .upload-box:active {
+      border: 2px solid #000;
+      background-color: #fff;
+      color: #000;
+      box-shadow: 0 0 6px #000 inset;
+      animation: button-press 0.15s ease-in-out;
+    }
+    .a-button, .b-button, .start-button, .select-button {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 1rem;
+      color: white;
+      text-align: center;
+      line-height: 48px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+    .a-button {
+      right: 60px;
+      bottom: 100px;
+      background-color: #880808;
+      border: 2px solid #000;
+      box-shadow: inset -2px -2px 0 #600000, inset 2px 2px 0 #ff9999;
+    }
+    .b-button {
+      right: 120px;
+      bottom: 130px;
+      background-color: #5555aa;
+      border: 2px solid #000;
+      box-shadow: inset -2px -2px 0 #333388, inset 2px 2px 0 #aaaaff;
+    }
+    .start-button, .select-button {
+      bottom: 40px;
+      height: 30px;
+      width: 60px;
+      border-radius: 8px;
+      font-size: 0.6rem;
+      line-height: 28px;
+      background-color: #222;
+      border: 2px solid #000;
+      box-shadow: inset -2px -2px 0 #000, inset 2px 2px 0 #666;
+    }
+    .start-button {
+      left: 50%;
+      transform: translateX(40px);
+    }
+    .select-button {
+      left: 50%;
+      transform: translateX(-100px);
+    }
+    .a-button:active, .b-button:active, .start-button:active, .select-button:active {
+      transform: scale(0.95);
+      filter: brightness(1.2);
+    }
+    .dpad {
+      position: absolute;
+      bottom: 80px;
+      left: 40px;
+      width: 100px;
+      height: 100px;
+    }
+    .dpad div {
+      position: absolute;
+      background-color: #444;
+      border: 2px solid #111;
+      box-shadow: inset -2px -2px 0 #111, inset 2px 2px 0 #888;
+    }
+    .dpad-up, .dpad-down {
+      width: 30px;
+      height: 30px;
+      left: 35px;
+    }
+    .dpad-up {
+      top: 0;
+    }
+    .dpad-down {
+      bottom: 0;
+    }
+    .dpad-left, .dpad-right {
+      width: 30px;
+      height: 30px;
+      top: 35px;
+    }
+    .dpad-left {
+      left: 0;
+    }
+    .dpad-right {
+      right: 0;
+    }
+    .dpad-center {
+      width: 30px;
+      height: 30px;
+      top: 35px;
+      left: 35px;
+      background-color: #000;
+    }
+    @keyframes button-press {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.96); }
+      100% { transform: scale(1); }
+    }
+    #imageUpload {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <h1>🧩 GIF 分割 + 合成工具</h1>
-
-  <h2>📂 步驟 1：上傳 1024x1024 的 4x4 九宮格 PNG</h2>
-  <input type="file" id="imageUpload" accept="image/png">
-  <button onclick="splitFrames()">✂️ 分割圖片</button>
-  <button onclick="downloadZip()">📦 下載所有分割圖（ZIP）</button>
-  <div id="fileNameDisplay"></div>
-  <div id="statusMessage"></div>
-  <div id="frames"></div>
-
-  <h2>🎞️ 步驟 2：合成動畫 GIF</h2>
-  <label>每格延遲（毫秒）：</label>
-  <input type="number" id="delayInput" value="100">
-  <button onclick="redirectToEzgif()">➡️ 使用 Ezgif 合成</button>
-
-  <div class="preview">
-    <h3>GIF 預覽：</h3>
-    <div id="previewContainer"></div>
-    <a id="downloadLink" href="#" download="output.gif">🔽 下載 GIF</a>
+  <div class="screen">
+    <h1>UPLOAD IMAGE</h1>
+    <p>1. UPLOAD IMAGE</p>
+    <p>2. SPLIT IMAGE</p>
+    <p>3. DOWNLOAD ZIP</p>
+    <p>4. CREATE GIF</p>
+    <label for="imageUpload" class="upload-box">CHOOSE FILE</label>
+    <input type="file" id="imageUpload" accept="image/png">
   </div>
-
-  <script>
-    let imageList = [];
-    let zipFrames = [];
-
-    function splitFrames() {
-      const file = document.getElementById('imageUpload').files[0];
-      const frameContainer = document.getElementById('frames');
-      const statusMessage = document.getElementById('statusMessage');
-      const fileNameDisplay = document.getElementById('fileNameDisplay');
-      frameContainer.innerHTML = '';
-      statusMessage.textContent = '';
-      fileNameDisplay.textContent = '';
-      imageList = [];
-      zipFrames = [];
-
-      if (!file) {
-        alert("請上傳一張 1024x1024 的圖片。");
-        return;
-      }
-
-      fileNameDisplay.textContent = `📂 當前上傳檔案：${file.name}`;
-
-      const img = new Image();
-      const reader = new FileReader();
-
-      reader.onload = function (e) {
-        img.onload = function () {
-          if (img.width !== 1024 || img.height !== 1024) {
-            alert("圖片尺寸錯誤，請上傳 1024x1024 像素的圖片。");
-            return;
-          }
-
-          for (let i = 0; i < 16; i++) {
-            const row = Math.floor(i / 4);
-            const col = i % 4;
-
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 256;
-            canvas.height = 256;
-
-            ctx.drawImage(img, col * 256, row * 256, 256, 256, 0, 0, 256, 256);
-
-            const frameDataURL = canvas.toDataURL('image/png');
-            const frameImg = new Image();
-            frameImg.src = frameDataURL;
-            frameImg.className = 'frame-img';
-            frameContainer.appendChild(frameImg);
-
-            const copy = document.createElement('canvas');
-            copy.width = 256;
-            copy.height = 256;
-            copy.getContext('2d').drawImage(canvas, 0, 0);
-            imageList.push(copy);
-            zipFrames.push(frameDataURL);
-          }
-
-          statusMessage.textContent = '✅ 上傳成功並完成分割！';
-        };
-        img.src = e.target.result;
-      };
-
-      reader.readAsDataURL(file);
-    }
-
-    function downloadZip() {
-      if (zipFrames.length !== 16) {
-        alert("請先完成圖片分割！");
-        return;
-      }
-
-      const zip = new JSZip();
-      zipFrames.forEach((dataURL, index) => {
-        const base64Data = dataURL.replace(/^data:image\/png;base64,/, "");
-        zip.file(`${index + 1}.png`, base64Data, { base64: true });
-      });
-      zip.generateAsync({ type: "blob" }).then(function (content) {
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(content);
-        link.download = "frames.zip";
-        link.click();
-      });
-    }
-
-    function redirectToEzgif() {
-      if (zipFrames.length !== 16) {
-        alert("請先完成圖片分割並下載 ZIP！");
-        return;
-      }
-      window.open("https://ezgif.com/maker", "_blank");
-    }
-  </script>
+  <div class="a-button" onclick="alert('A Button Pressed')">A</div>
+  <div class="b-button" onclick="alert('B Button Pressed')">B</div>
+  <div class="start-button" onclick="alert('START Pressed')">START</div>
+  <div class="select-button" onclick="alert('SELECT Pressed')">SELECT</div>
+  <div class="dpad">
+    <div class="dpad-up"></div>
+    <div class="dpad-down"></div>
+    <div class="dpad-left"></div>
+    <div class="dpad-right"></div>
+    <div class="dpad-center"></div>
+  </div>
 </body>
 </html>
 
