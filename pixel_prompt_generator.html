@@ -38,6 +38,11 @@
       display: block;
       margin-top: 0.5rem;
     }
+    .section-group {
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px dashed #ccc;
+    }
   </style>
 </head>
 <body>
@@ -48,29 +53,31 @@
     <small>⚠️ 目前 AI 生成圖片的工具（如 DALL·E 等）對於「精準格數排列」與「圖像分格」這類像素級排版仍有誤差，若排版出現格數不齊或圖層錯位，建議可以多嘗試幾次生成。</small>
   </div>
 
-  <label>人物特徵：</label>
-  <input type="text" id="character" placeholder="如：疲憊的女設計師，黑眼圈明顯">
+  <div class="section-group">
+    <label>人物特徵：</label>
+    <input type="text" id="character" placeholder="如：疲憊的女設計師，黑眼圈明顯">
 
-  <label>服裝設定：</label>
-  <input type="text" id="outfit" placeholder="如：深綠帽T、牛仔褲、球鞋">
+    <label>服裝設定：</label>
+    <input type="text" id="outfit" placeholder="如：深綠帽T、牛仔褲、球鞋">
 
-  <label>動作提示（會自動轉為逐格動作）：</label> <small>💡 建議輸入 3~4 個階段的動作，以利產生連貫動畫。例如：「環顧四周 → 抽出忍者刀 → 投擲煙霧彈 → 化成木頭」</small>
-  <input type="text" id="actionHint" placeholder="如：疲憊地走進房間後坐下並趴在桌上">
- 
-  <label>場景與背景：</label>
-  <input type="text" id="scene" placeholder="如：深夜工作室，桌燈打開，牆上貼滿設計圖">
+    <label>動作提示（會自動轉為逐格動作）：</label>
+    <small>💡 建議輸入 3~4 個階段的動作，以利產生連貫動畫。例如：「環顧四周 → 抽出忍者刀 → 投擲煙霧彈 → 化成木頭」</small>
+    <input type="text" id="actionHint" placeholder="如：疲憊地走進房間後坐下並趴在桌上">
 
-  <label>格線數量：</label>
-  <select id="gridSize">
-    <option value="3">3x3</option>
-    <option value="4" selected>4x4</option>
-  </select>
+    <label>場景與背景：</label>
+    <input type="text" id="scene" placeholder="如：深夜工作室，桌燈打開，牆上貼滿設計圖">
+
+    <label>格線數量：</label>
+    <select id="gridSize">
+      <option value="3">3x3</option>
+      <option value="4" selected>4x4</option>
+    </select>
+  </div>
 
   <button onclick="generatePrompt()">✨ 產生提示詞</button>
-  <button onclick="generateSafePrompt()">🛡️ 安全英文提示詞</button>
 
   <textarea id="output" rows="12" readonly></textarea>
-  <button onclick="copyPrompt()">📋 複製提示詞</button>
+  <button onclick="copyPrompt()">📋 複製提示詞並貼至 GPT</button>
 
   <script>
     function generatePrompt(isSafe = false) {
@@ -84,9 +91,9 @@
       const totalFrames = gridSize * gridSize;
       const frameSize = (canvasSize / gridSize).toFixed(2);
 
-      const safeCharacter = isSafe ? character.replace(/女設計師/g, "a female character") : character;
-      const safeOutfit = isSafe ? outfit.replace(/帽T|帽t/g, "a hoodie").replace(/泳裝/g, "beachwear") : outfit;
-      const safeScene = isSafe ? scene.replace(/沙灘/g, "a sunny beach").replace(/工作室/g, "a cozy studio") : scene;
+      const safeCharacter = character;
+      const safeOutfit = outfit;
+      const safeScene = scene;
 
       let prompt = `Create a pixel art sprite sheet in cozy indie game style with a Japanese hand-drawn pixel art aesthetic.\n`;
       prompt += `Canvas size is fixed at 1024x1024 pixels, arranged in a ${gridSize}x${gridSize} grid (${totalFrames} frames).\n`;
@@ -98,10 +105,6 @@
       prompt += `Apply Ghibli-inspired palette and keep the background fully consistent across all frames for seamless sprite animation.`;
 
       document.getElementById('output').value = prompt;
-    }
-
-    function generateSafePrompt() {
-      generatePrompt(true);
     }
 
     function copyPrompt() {
