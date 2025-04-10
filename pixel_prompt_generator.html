@@ -34,6 +34,10 @@
       padding: 1rem;
       margin-bottom: 2rem;
     }
+    .note small {
+      display: block;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -41,6 +45,7 @@
 
   <div class="note">
     ⚠️ <strong>提醒：</strong> 若輸入中包含知名角色（如：皮卡丘、瑪利歐等），可能涉及版權風險。建議改為描述風格相似的原創角色，例如「黃色電氣老鼠造型角色」。
+    <small>⚠️ 目前 AI 生成圖片的工具（如 DALL·E 等）對於「精準格數排列」與「圖像分格」這類像素級排版仍有誤差，若排版出現格數不齊或圖層錯位，建議可以多嘗試幾次生成。</small>
   </div>
 
   <label>人物特徵：</label>
@@ -51,6 +56,7 @@
 
   <label>動作提示（會自動轉為逐格動作）：</label>
   <input type="text" id="actionHint" placeholder="如：疲憊地走進房間後坐下並趴在桌上">
+  <small>💡 建議輸入 3~4 個階段的動作，以利產生連貫動畫。例如：「環顧四周 → 抽出忍者刀 → 投擲煙霧彈 → 化成木頭」</small>
 
   <label>場景與背景：</label>
   <input type="text" id="scene" placeholder="如：深夜工作室，桌燈打開，牆上貼滿設計圖">
@@ -107,3 +113,4 @@
   </script>
 </body>
 </html>
+
